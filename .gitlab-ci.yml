@@ -7,9 +7,10 @@ cache:
     - build/
   policy: pull-push
 
-.base_build_job:
+build-test:
   stage: build_and_test
   script:
+    - apt-get update && apt-get install -y build-essential cmake
     - cmake -B build -DCMAKE_CXX_STANDARD=17
     - cmake --build build --config Release
     - ctest --test-dir build --output-on-failure -C Release --output-junit build/test-results.xml
@@ -20,25 +21,3 @@ cache:
     reports:
       junit: build/test-results.xml
     expire_in: 14 days
-
-build-ubuntu:
-  extends: .base_build_job
-  image: ubuntu:22.04
-  tags:
-    - docker
-  before_script:
-    - apt-get update && apt-get install -y build-essential cmake
-
-build-macos:
-  extends: .base_build_job
-  tags:
-    - macos
-  before_script:
-    - brew install cmake
-
-build-windows:
-  extends: .base_build_job
-  tags:
-    - windows
-  before_script:
-    - choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
