@@ -1,0 +1,90 @@
+name: DataConverter CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            cmake-args: ""
+            build-dir: build
+          - os: macos-latest
+            cmake-args: ""
+            build-dir: build
+          - os: windows-latest
+            cmake-args: "-A x64"
+            build-dir: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ matrix.os }}-build-${{ hashFiles('src/**', 'tests/**', 'CMakeLists.txt') }}
+          restore-keys: |
+            ${{ matrix.os }}-build-
+
+      - name: Install deps (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake python3
+
+      - name: Install deps (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install cmake python3
+
+      - name: Install deps (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install cmake python3 -y
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_CXX_STANDARD=17 ${{ matrix.cmake-args }}
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure -C Release --output-junit build/test-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: build/test-results.xml
+          retention-days: 14
+
+      - name: Upload build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DataConverter-ubuntu
+          path: build/DataConverter
+          retention-days: 14
+
+      - name: Upload build (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DataConverter-macos
+          path: build/DataConverter
+          retention-days: 14
+
+      - name: Upload build (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DataConverter-windows
+          path: build/Release/DataConverter.exe
+          retention-days: 14
