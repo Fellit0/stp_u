@@ -1,0 +1,44 @@
+stages:
+  - build_and_test
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG-$CI_JOB_NAME"
+  paths:
+    - build/
+  policy: pull-push
+
+.base_build_job:
+  stage: build_and_test
+  script:
+    - cmake -B build -DCMAKE_CXX_STANDARD=17
+    - cmake --build build --config Release
+    - ctest --test-dir build --output-on-failure -C Release --output-junit build/test-results.xml
+  artifacts:
+    when: always
+    paths:
+      - build/
+    reports:
+      junit: build/test-results.xml
+    expire_in: 14 days
+
+build-ubuntu:
+  extends: .base_build_job
+  image: ubuntu:22.04
+  tags:
+    - docker
+  before_script:
+    - apt-get update && apt-get install -y build-essential cmake
+
+build-macos:
+  extends: .base_build_job
+  tags:
+    - macos
+  before_script:
+    - brew install cmake
+
+build-windows:
+  extends: .base_build_job
+  tags:
+    - windows
+  before_script:
+    - choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
