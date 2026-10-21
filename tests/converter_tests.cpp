@@ -1,3 +1,4 @@
+#error "НАМЕРЕННАЯ ОШИБКА ДЛЯ ТЕСТА FAIL-FAST"
 #include "converter.hpp"
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -10,8 +11,8 @@ using json = nlohmann::json;
 TEST(Converter, CsvToJson) {
     const auto result = json::parse(convert_text("name,age\nEva,36\nLinus,55\n", "csv", "json"));
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result[0]["name"], "WrongName");
-    EXPECT_EQ(result[1]["age"], "99"); // CSV values are strings by contract.
+    EXPECT_EQ(result[0]["name"], "Eva");
+    EXPECT_EQ(result[1]["age"], "55"); // CSV values are strings by contract.
 }
 
 TEST(Converter, CsvQuotedComma) {
