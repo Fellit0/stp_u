@@ -1,4 +1,3 @@
-#error "НАМЕРЕННАЯ ОШИБКА ДЛЯ ТЕСТА FAIL-FAST"
 #include "converter.hpp"
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
